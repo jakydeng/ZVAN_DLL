@@ -856,6 +856,48 @@ void zvanSmokeMoveDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params
 	{
 		param->infos[infoId].param.work = false;
 	}
+
+
+	if (pFrImg != NULL)
+		cvReleaseImage(&pFrImg);
+	if (pBkImg != NULL)
+		cvReleaseImage(&pBkImg);
+	if (pResult != NULL)
+		cvReleaseImage(&pResult);
+	if (pImg != NULL)
+		cvReleaseImage(&pImg);
+
+	if (pFrameMat != NULL)
+		cvReleaseMat(&pFrameMat);
+	if (pFrMat != NULL)
+		cvReleaseMat(&pFrMat);
+	if (pBkMat != NULL)
+		cvReleaseMat(&pBkMat);
+	if (pMatChannels[0] != NULL)
+		cvReleaseMat(&pMatChannels[0]);
+	if (pMatChannels[1] != NULL)
+		cvReleaseMat(&pMatChannels[1]);
+	if (pMatChannels[2] != NULL)
+		cvReleaseMat(&pMatChannels[2]);
+	if (pMatChannels[3] != NULL)
+		cvReleaseMat(&pMatChannels[3]);
+	if (pFrameMatPre1 != NULL)
+		cvReleaseMat(&pFrameMatPre1);
+	if (pFrameMatPre2 != NULL)
+		cvReleaseMat(&pFrameMatPre2);
+	if (pFrameMatCur != NULL)
+		cvReleaseMat(&pFrameMatCur);
+	if (framediff1 != NULL)
+		cvReleaseMat(&framediff1);
+	if (framediff2 != NULL)
+		cvReleaseMat(&framediff2);
+	if (pWaveletCur != NULL)
+		cvReleaseMat(&pWaveletCur);
+	if (pWaveletBk != NULL)
+		cvReleaseMat(&pWaveletBk);
+	if (thresholdMat != NULL)
+		cvReleaseMat(&thresholdMat);
+
 	LOG_WRITE("Work:%d\n", param->infos[infoId].param.work);
 	LOG_WRITE("[EXIT] %s\n", __FUNCTION__);
 }

@@ -151,7 +151,7 @@ bool  Zvan_VIA_Analysis(Zvan_Analysis_Params* param){
 
 			//???
 
-#if 0
+#if 1
 			roiRect.x = (int)(param->infos[i].rect.x * nImgWidth / 100.0);
 			roiRect.y = (int)(param->infos[i].rect.y * nImgHeight / 100.0);
 			roiRect.height = (int)(param->infos[i].rect.h * nImgHeight / 100.0);
@@ -448,7 +448,7 @@ float liquidHeightRatio(Mat &firstFrame, Mat &secondFrame) {
 	erode(grayDiff, grayDiff, element);
 
 
-	//�˶���⣬���˶�����Һ��
+	//运动检测，无运动则不是液面
 	FirstsobelMat /= 255;
 	SecondsobelMat /= 255;
 	grayDiff /= 255;
@@ -486,60 +486,6 @@ float liquidHeightRatio(Mat &firstFrame, Mat &secondFrame) {
 	return 0;
 }
 
-#if 0
-void zvanLiquidHeightDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* param)
-{
-	LOG_WRITE("################################################################################################################################\n");
-	printf("[ENTER] %s\n", __FUNCTION__);
-	LOG_WRITE("[ENTER] %s\n", __FUNCTION__);
-	//const int nDiffThre = 5;;  //ROI????nWindowSize X nWindowSize ????  size 7  thr 5
-	const int nDiffThre = 7;
-	const int nGrayThre = 2;
-	int nImgWidth = img[0].cols;
-	int nImgHeight = img[0].rows;
-
-
-	Mat diff;
-
-	for (int idx = 0; idx < imgNum; idx++)
-	{
-		GaussianBlur(img[idx], img[idx], Size(5, 5), 0);
-		cvtColor(img[idx], img[idx], COLOR_BGR2GRAY);
-	}
-
-	for (int frameCnt = 0; frameCnt <= 3; frameCnt++)
-	{
-
-		diff = abs(img[4] - img[frameCnt]);
-		diff = (diff > nDiffThre) / 0xff;
-
-		LOG_WRITE("****************************************\n");
-		LOG_WRITE("Times = %d\n", frameCnt);
-		int height = getHeight(diff, img[4]);
-
-		if (height)
-		{
-			float fRatio = static_cast<float>(nImgHeight - height) / static_cast<float>(nImgHeight);
-			param->infos[infoId].param.ratio = fRatio;
-
-			LOG_WRITE("Water height %.2f\n", param->infos[infoId].param.ratio);
-
-
-			return;
-		}
-
-	}
-
-	param->infos[infoId].param.ratio = 0.0f;
-	LOG_WRITE("Water height %.2f\n", param->infos[infoId].param.ratio);
-	LOG_WRITE("[EXIT] %s\n", __FUNCTION__);
-}
-#else
-/*
-	input:gray image
-	ratio: 
-
-*/
 bool getMoveStatus(const Mat& _first, const Mat& _second, int diffThre, float ratio) {
 	
 	int width = _first.cols;
@@ -575,7 +521,7 @@ float getLiquidRatio(const Mat& _input) {
 	int totalPixel = _input.rows * _input.cols;
 	double totalLiquidPixel = cv::sum(threMat)[0];
 
-	//�ж�Һ��λ��
+	//判断液面位置
 	double bottomMean = cv::mean(sMat.rowRange(_input.rows - 1,_input.rows))[0];
 
 	float ratio;
@@ -607,20 +553,13 @@ void zvanLiquidHeightDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Par
 	printf("[ENTER] %s  img size=%d\n", __FUNCTION__, sizeof(img));
 	LOG_WRITE("[ENTER] %s\n", __FUNCTION__);
 
-
-
-	/*for (int idx = 0; idx < 1; idx++)
-	{
-	param->infos[infoId].param.ratio = liquidHeightRatio(img[0], img[4]);
-
-	}*/
+	
 	param->infos[infoId].param.ratio = getLiquidRatio(img[0], img[4]);
 
-	//LOG_WRITE("Water height %.2f\n", param->infos[infoId].param.ratio);
 	
 	LOG_WRITE("[EXIT] %s\n", __FUNCTION__);
 }
-#endif
+
 /****************************************
 * @brief ??????
 * @param Zvan_Analysis_Params ?????????
@@ -904,7 +843,7 @@ void zvanSmokeMoveDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params
 			pImg->origin = pFrame->origin;
 			pResult->origin = pFrame->origin;
 		}
-		if (DetectedCount >= 50)
+		if (DetectedCount >= 1500)
 		{
 			MoveCount++;
 		}
@@ -1085,7 +1024,7 @@ void zvanWaterMoveDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params
 			pImg->origin = pFrame->origin;
 			pResult->origin = pFrame->origin;
 		}
-		if (DetectedCount >= 50)
+		if (DetectedCount >= 1500)
 		{
 			MoveCount++;
 		}
@@ -1435,7 +1374,6 @@ void zvanFoamDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* par
 					}
 				}
 			}
-			waitKey();
 			Mat FoamGray;
 			cvtColor(Foam, FoamGray, CV_BGR2GRAY);
 			//?????
@@ -1534,7 +1472,9 @@ void zvanFoamDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* par
 
 				if ((abs(trueForm.at<Vec3b>(row, col)[0] - bAve) < trueForm.at<Vec3b>(row, col)[0] * 0.15) && (abs(trueForm.at<Vec3b>(row, col)[1] - gAve) < trueForm.at<Vec3b>(row, col)[1] * 0.15) && (abs(trueForm.at<Vec3b>(row, col)[2] - rAve) < trueForm.at<Vec3b>(row, col)[2] * 0.15) && grayTrueForm.at<uchar>(row, col) > 145)//frame1?????130,???????
 				{
-					trueFormCount++;
+
+					//trueFormCount++;
+
 				}
 				else//???????130,???????
 				{
@@ -1545,6 +1485,32 @@ void zvanFoamDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* par
 				}
 			}
 		}
+		Mat tmp;
+		Mat trueFormgray;
+		cvtColor(trueForm, trueFormgray, CV_BGR2GRAY);
+		Mat structure_element = getStructuringElement(MORPH_RECT, Size(5, 5)); //ÉèÖÃÅòÕÍ/¸¯Ê´µÄºËÎª¾ØÐÎ£¬´óÐ¡Îª3*3
+		erode(trueFormgray, trueFormgray, structure_element); //¸¯Ê´
+		dilate(trueFormgray, trueFormgray, structure_element); //ÅòÕÍ
+
+		cv::filterSpeckles(trueFormgray, 0, 30, 130, tmp);
+		for (int row = 0; row < trueForm.rows; row++)
+		{
+			for (int col = 0; col < trueForm.cols; col++)
+			{
+				if (trueFormgray.at<uchar>(row, col) == 0)
+				{
+					trueForm.at<Vec3b>(row, col)[0] = 0;
+					trueForm.at<Vec3b>(row, col)[1] = 0;
+					trueForm.at<Vec3b>(row, col)[2] = 0;
+
+				}
+				else
+				{
+					trueFormCount++;
+				}
+			}
+		}
+
 		if (trueFormCount > trueFormCountPre)
 		{
 			param->infos[infoId].param.object.pixel = trueFormCount;
@@ -1567,7 +1533,9 @@ void zvanFoamDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* par
 		param->infos[infoId].param.object.froth = false;
 		param->infos[infoId].param.object.color = 0;
 	}
-
+	delete[] B;
+	delete[] G;
+	delete[] R;
 	LOG_WRITE("Foam:%d\n", param->infos[infoId].param.object.froth);
 	LOG_WRITE("Foam Color:(%d,%d,%d)\n", param->infos[infoId].param.object.color >> 16, param->infos[infoId].param.object.color >> 8 & 0xff, param->infos[infoId].param.object.color & 0xff);
 	LOG_WRITE("[EXIT] %s\n", __FUNCTION__);
@@ -1579,61 +1547,58 @@ void zvanFoamDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* par
 * @return bool ??????????
 * @remark ????????,?????????,
 ****************************************/
+vector<Point2f> getConer(const Mat& grayImg) {
+	vector<Point2f> corners;
+	double qualityLevel = 0.01;//角点检测可接受的最小特征�?
+	double minDistance = 10;//角点之间的最小距�?
+	int blockSize = 3;//计算导数自相关矩阵时指定的邻域范�?
+	double k = 0.04;//权重系数
+	
+
+	//�?】进行Shi-Tomasi角点检�?
+	goodFeaturesToTrack(grayImg,//输入图像
+		corners,//检测到的角点的输出向量
+		1,//角点的最大数�?
+		qualityLevel,//角点检测可接受的最小特征�?
+		minDistance,//角点之间的最小距�?
+		Mat(),//感兴趣区�?
+		blockSize,//计算导数自相关矩阵时指定的邻域范�?
+		false,//不使用Harris角点检�?
+		k);//权重系数
+
+	return corners;
+}
+
+float getDistance(const Mat& _firstGray, const Mat& _secondGray) {
+	vector<Point2f> coner1, coner2;
+
+	coner1 = getConer(_firstGray);
+	coner2 = getConer(_secondGray);
+
+	return abs(coner1[0].x - coner2[0].x) + abs(coner1[0].y - coner2[0].y);
+}
+
 void zvanObjectMoveDetect(Mat img[], int imgNum, int infoId, Zvan_Analysis_Params* param)
 {
 	LOG_WRITE("################################################################################################################################\n");
 	LOG_WRITE("[ENTER] %s\n", __FUNCTION__);
-	int frame_height;
-	int frame_width;
-	//int frame_channel;
-	int DetectedCount = 0;
-	Mat Bak, curr;
-	int count = 0;
-	int moveCount = 0;
-	Mat Bak1, curr1;
-	for (int nFrmNum = 0; nFrmNum < imgNum; nFrmNum++)
-	{
-		frame_height = img[nFrmNum].rows;
-		frame_width = img[nFrmNum].cols;
-		if (nFrmNum == 0)
-		{
-			Bak = img[nFrmNum].clone();
-			GaussianBlur(Bak, Bak, Size(3, 3), 0, 0); //
-		}
-		else
-		{
+	
+	float moveThreshold = 10.0f;
 
-			cvtColor(Bak, Bak1, COLOR_BGR2GRAY);
-			cvtColor(img[nFrmNum], curr1, COLOR_BGR2GRAY);
-			Mat diff = Bak1.clone();
-			for (int row = 0; row < frame_height; row++)
-			{
-				for (int col = 0; col < frame_width; col++)
-				{
-					diff.at<uchar>(row, col) = abs(curr1.at<uchar>(row, col) - Bak1.at<uchar>(row, col));
-					if (diff.at<uchar>(row, col) > 100)
-					{
-						count++;
-					}
-				}
-			}
-			if (count > 1000)
-			{
+	Mat firstImg, secondImg;
+	cvtColor(img[0], firstImg, CV_BGR2GRAY);
+	cvtColor(img[4], secondImg, CV_BGR2GRAY);
 
-				moveCount++;
-			}
-			count = 0;
-			Bak = img[nFrmNum].clone();
-			if (moveCount >= 1)
-			{
-				param->infos[infoId].param.activity = true;
-			}
-			else
-			{
-				param->infos[infoId].param.activity = false;
-			}
-		}
+	GaussianBlur(firstImg, firstImg, Size(5, 5), 0);
+	GaussianBlur(secondImg, secondImg, Size(5, 5), 0);
+
+	if (getDistance(firstImg, secondImg) >= moveThreshold) {
+		param->infos[infoId].param.activity = true;
 	}
+	else {
+		param->infos[infoId].param.activity = false;
+	}
+
 	LOG_WRITE("Activity:%d\n", param->infos[infoId].param.activity);
 	LOG_WRITE("[EXIT] %s\n", __FUNCTION__);
 }
